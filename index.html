@@ -110,12 +110,18 @@
         }
 
         #status-msg { margin-top: 20px; font-size: 1.2rem; min-height: 30px; color: #f1c40f;}
+        @media (max-width: 600px) {
+            .card-slot { width: 160px; height: 240px; }
+            .cards-container { gap: 15px; }
+            .card-front, .card-back { font-size: 1rem; }
+            h1 { font-size: 1.5rem; }
+        }
     </style>
 </head>
 <body>
     <div id="password-screen">
         <h1 style="color: #ffb3b3;">מתי התחלנו לצאת?</h1>
-        <input type="password" id="password-input" placeholder="הכנס תאריך...">
+        <input type="tel" id="password-input" placeholder="הכנס תאריך...">
         <button class="btn" onclick="checkPassword()">היכנס</button>
         <div id="pass-error" style="color: #ffb8b8; margin-top: 10px; font-weight: bold;"></div>
     </div>
@@ -206,6 +212,7 @@
         // פונקציית התחברות
         window.joinGame = function(name) {
             currentPlayer = name;
+            sessionStorage.setItem('savedPlayer', name);
             document.getElementById('login-screen').style.display = 'none';
             document.getElementById('game-screen').style.display = 'flex';
             document.getElementById('welcome-msg').innerText = `היי ${currentPlayer}!`;
@@ -239,7 +246,7 @@
             let deck = snapshot.val();
             
             if (!deck || deck.length === 0) {
-                alert("הערימה ריקה! הגיע הזמן לערבב מחדש.");
+                document.getElementById('status-msg').innerText = "סיימנו את כל הקלפים! הגיע הזמן ליישם... 😉";
                 return;
             }
 
@@ -296,6 +303,14 @@
                 }
             });
         }
+        window.onload = function() {
+            const savedPlayer = sessionStorage.getItem('savedPlayer');
+            if (savedPlayer) {
+                // אם מצאנו שם שמור בזיכרון, נדלג ישר למשחק
+                document.getElementById('password-screen').style.display = 'none';
+                joinGame(savedPlayer);
+            }
+        };
     </script>
 </body>
 </html>
