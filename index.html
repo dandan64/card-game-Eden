@@ -116,9 +116,20 @@
             .card-front, .card-back { font-size: 1rem; }
             h1 { font-size: 1.5rem; }
         }
+        #game-background {
+            position: absolute; /* מוציא את זה מהזרימה הרגילה של העמוד */
+            top: -20px; left: -20px; right: -20px; bottom: -20px; /* מותח קצת מעבר למסך כדי שהשוליים לא יהיו חדים בגלל הטשטוש */
+            background-image: url('front-page.jpeg'); /* תמונת ברירת המחדל */
+            background-size: cover;
+            background-position: center;
+            filter: blur(15px) brightness(0.35); /* הכהיה וטשטוש */
+            z-index: -1; /* דוחף את זה מאחורי כל שאר האלמנטים במשחק */
+            transition: background-image 1.5s ease-in-out; /* מגדיר שהחלפת תמונה תיקח שנייה וחצי במעבר רך */
+        }
     </style>
 </head>
 <body>
+    <div id="game-background"></div>
     <div id="password-screen">
         <h1 style="color: #ffb3b3;">מתי התחלנו לצאת?</h1>
         <input type="tel" id="password-input" placeholder="הכנס תאריך...">
@@ -180,8 +191,9 @@
 
         const allCards = Array.from({ length: 18 }, (_, i) => ({
             id: i + 1,
-            image: `card${i + 1}.png`
-            }));
+            image: `card${i + 1}.png`,
+            bg: `bg${i + 1}.jpg` // הוספנו את הקישור לתמונת הרקע הייעודית
+        }));
 
         const cardBack = "card-back.png";
 
@@ -282,8 +294,10 @@
                 const statusMsg = document.getElementById('status-msg');
                 const cardFrontImage = document.querySelector('.card-front');
                 const activeCardBack = document.getElementById('active-card-back');
+                const gameBg = document.getElementById('game-background');
 
                 if (data.activeCard) {
+                    gameBg.style.backgroundImage = `url('${data.activeCard.bg}')`;
                     if (data.activeCard.drawnBy === currentPlayer) {
                         // אם אני שלפתי את הקלף - תראה לי אותו
                         cardFrontImage.style.backgroundImage = `url('${data.activeCard.image}')`;
@@ -296,6 +310,7 @@
                         statusMsg.innerText = `${data.activeCard.drawnBy} שלפ/ה קלף. מחכים שיסיימו...`;
                     }
                 } else {
+                    gameBg.style.backgroundImage = `url('front-page.jpeg')`;
                     // אין קלף פעיל
                     activeCardSlot.classList.remove('flipped');
                     activeCardBack.innerHTML = '';
