@@ -165,12 +165,12 @@
     <div id="password-screen">
         <h1 style="color: #ffb3b3;">מתי התחלנו לצאת?</h1>
         <input type="tel" id="password-input" placeholder="הכנס תאריך...">
-        <button class="btn" onclick="checkPassword()">היכנס</button>
+        <button class="btn" onclick="checkPassword()">בואי נתחיל ❤️</button>
         <div id="pass-error" style="color: #ffb8b8; margin-top: 10px; font-weight: bold;"></div>
     </div>
 
     <div id="login-screen">
-        <h1>מי משחק עכשיו?</h1>
+        <h1>של מי התור להוביל?</h1>
         <div>
             <button class="btn" onclick="joinGame('דניאל')">דניאל</button>
             <button class="btn" onclick="joinGame('עדן')">עדן</button>
@@ -179,12 +179,12 @@
 
     <div id="game-screen">
         <h2 id="welcome-msg"></h2>
-        <div id="cards-count">קלפים נותרו: --</div>
+        <div id="cards-count">הפתעות בקופה: --</div>
         
         <div class="cards-container">
             <div class="card-slot" id="deck-slot" onclick="drawCard()">
                 <div class="card-inner">
-                    <div class="card-back">הערימה (שלוף)</div>
+                    <div class="card-back"> לחץ/י לשליפה</div>
                 </div>
             </div>
 
@@ -295,7 +295,7 @@
             let deck = snapshot.val();
             
             if (!deck || deck.length === 0) {
-                document.getElementById('status-msg').innerText = "סיימנו את כל הקלפים! הגיע הזמן ליישם... 😉";
+                document.getElementById('status-msg').innerText = "הקלפים הסתיימו, לעוד משחקים ורעיונות אנא צרו קשר! ❤️";
                 return;
             }
 
