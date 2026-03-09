@@ -46,8 +46,8 @@
             margin-top: 30px;
         }
         .card-slot {
-            width: 200px;
-            height: 300px;
+            width: 250px;
+            height: 350px;
             perspective: 1000px; /* תלת מימד */
         }
         .card-inner {
@@ -67,33 +67,32 @@
             position: absolute;
             backface-visibility: hidden;
             border-radius: 15px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
             display: flex;
             align-items: center;
             justify-content: center;
             text-align: center;
-            padding: 20px;
-            box-sizing: border-box;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+            font-size: 1.2rem;
         }
         /* גב הקלף - כאן תשים את העיצוב שלך */
         .card-back {
-            background-color: #34495e;
-            background-image: url('שים_כאן_לינק_לתמונה_של_גב_הקלף.jpg');
-            background-size: cover;
-            background-position: center;
-            border: 2px solid #ecf0f1;
-            color: white;
-            font-size: 1.5rem;
+            background-image: url('card-back.jpg');
         }
         /* פני הקלף (המשימה) */
         .card-front {
-            background-color: #ecf0f1;
-            color: #2c3e50;
             transform: rotateY(180deg);
-            font-size: 1.3rem;
-            flex-direction: column;
+            background-color: #ecf0f1
         }
-        .category { font-size: 0.9rem; color: #e74c3c; margin-bottom: 10px; font-weight: bold; }
+        .partner-msg {
+            background: rgba(0,0,0,0.7);
+            padding: 10px;
+            border-radius: 5px;
+            color: white;
+        }
+
         #status-msg { margin-top: 20px; font-size: 1.2rem; min-height: 30px; color: #f1c40f;}
     </style>
 </head>
@@ -139,25 +138,24 @@
 
         // !!! הדבק כאן את ה-firebaseConfig שלך מ-Firebase Console !!!
         const firebaseConfig = {
-            apiKey: "YOUR_API_KEY",
-            authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-            databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.europe-west1.firebasedatabase.app",
-            projectId: "YOUR_PROJECT_ID",
-            storageBucket: "YOUR_PROJECT_ID.appspot.com",
-            messagingSenderId: "YOUR_SENDER_ID",
-            appId: "YOUR_APP_ID"
+            apiKey: "AIzaSyA9OVDYB_0ES8mFV8259XnXvHlEfhe1zs8",
+            authDomain: "card-game-c3384.firebaseapp.com",
+            databaseURL: "https://card-game-c3384-default-rtdb.firebaseio.com/",
+            projectId: "card-game-c3384",
+            storageBucket: "card-game-c3384.appspot.com",
+            messagingSenderId: "826274012499",
+            appId: "1:826274012499:web:27a9d98fd05693ad1bd5a6"
         };
 
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        // מאגר הקלפים שלנו
-        const allCards = [
-            { id: 1, category: "רומנטיקה", text: "תאר את הדייט הראשון שלנו מהנקודת מבט שלך." },
-            { id: 2, category: "הומור זוגי", text: "מה הדבר הכי מוזר שאני עושה מתוך שינה?" },
-            { id: 3, category: "אתגרים", text: "תן לי נשיקה במקום הכי מפתיע שאתה יכול לחשוב עליו עכשיו." },
-            // תוסיף כאן את כל שאר הקלפים שלך...
-        ];
+        const allCards = Array.from({ length: 18 }, (_, i) => ({
+            id: i + 1,
+            image: `card${i + 1}.jpg`
+            }));
+
+        const cardBack = "card-back.jpg";
 
         let currentPlayer = "";
 
@@ -231,24 +229,25 @@
 
                 const activeCardSlot = document.getElementById('active-card-slot');
                 const statusMsg = document.getElementById('status-msg');
+                const cardFrontImage = document.querySelector('.card-front');
+                const activeCardBack = document.getElementById('active-card-back');
 
                 if (data.activeCard) {
                     if (data.activeCard.drawnBy === currentPlayer) {
                         // אם אני שלפתי את הקלף - תראה לי אותו
-                        document.getElementById('card-category').innerText = data.activeCard.category;
-                        document.getElementById('card-text').innerText = data.activeCard.text;
+                        cardFrontImage.style.backgroundImage = `url('${data.activeCard.image}')`;
                         activeCardSlot.classList.add('flipped');
                         statusMsg.innerText = "זה הקלף שלך!";
                     } else {
-                        // אם בן/בת הזוג שלף - תראה לי את הגב עם הודעה
-                        activeCardSlot.classList.remove('flipped');
-                        document.getElementById('active-card-back').innerText = `הקלף של ${data.activeCard.drawnBy}`;
+                       // אם בן/בת הזוג שלף - תראה לי את הגב עם הודעה
+                       activeCardSlot.classList.remove('flipped');
+                        activeCardBack.innerHTML = `<div class="partner-msg">הקלף של ${data.activeCard.drawnBy}</div>`;
                         statusMsg.innerText = `${data.activeCard.drawnBy} שלפ/ה קלף. מחכים שיסיימו...`;
                     }
                 } else {
                     // אין קלף פעיל
                     activeCardSlot.classList.remove('flipped');
-                    document.getElementById('active-card-back').innerText = "אין קלף פעיל";
+                    activeCardBack.innerHTML = '';
                     statusMsg.innerText = "תור מי לשלוף?";
                 }
             });
