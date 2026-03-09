@@ -16,7 +16,7 @@
             margin: 0;
             overflow: hidden;
         }
-        #login-screen, #game-screen {
+        #password-screen, #login-screen, #game-screen {
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -24,7 +24,16 @@
             width: 100%;
             height: 100%;
         }
-        #game-screen { display: none; }
+        #login-screen, #game-screen { display: none; }
+        
+        #password-input {
+            padding: 10px;
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            text-align: center;
+            border-radius: 8px;
+            border: none;
+        }
         .btn {
             background-color: #e74c3c;
             color: white;
@@ -97,7 +106,13 @@
     </style>
 </head>
 <body>
-
+    <div id="password-screen">
+        <h1>נא להזין סיסמה:</h1>
+        <input type="password" id="password-input" placeholder="סיסמה...">
+        <button class="btn" onclick="checkPassword()">היכנס</button>
+        <div id="pass-error" style="color: #ffb8b8; margin-top: 10px; font-weight: bold;"></div>
+    </div>
+    
     <div id="login-screen">
         <h1>מי משחק עכשיו?</h1>
         <div>
@@ -158,6 +173,17 @@
         const cardBack = "card-back.png";
 
         let currentPlayer = "";
+        
+        window.checkPassword = function() {
+            const pass = document.getElementById('password-input').value;
+            
+            if (pass === "1234") { // שנה את ה-1234 לסיסמה שאתה רוצה
+                document.getElementById('password-screen').style.display = 'none';
+                document.getElementById('login-screen').style.display = 'flex';
+            } else {
+                document.getElementById('pass-error').innerText = "סיסמה שגויה!";
+            }
+        }
 
         // פונקציית התחברות
         window.joinGame = function(name) {
