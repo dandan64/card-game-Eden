@@ -117,14 +117,45 @@
             h1 { font-size: 1.5rem; }
         }
         #game-background {
-            position: absolute; /* מוציא את זה מהזרימה הרגילה של העמוד */
-            top: -20px; left: -20px; right: -20px; bottom: -20px; /* מותח קצת מעבר למסך כדי שהשוליים לא יהיו חדים בגלל הטשטוש */
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            z-index: -1;
+            
             background-image: url('front-page.jpeg'); /* תמונת ברירת המחדל */
-            background-size: 100% 100%;
+            background-size: contain; /* שומר על הפרופורציות במרכז */
             background-position: center;
-            filter: blur(15px) brightness(0.35); /* הכהיה וטשטוש */
-            z-index: -1; /* דוחף את זה מאחורי כל שאר האלמנטים במשחק */
-            transition: background-image 1.5s ease-in-out; /* מגדיר שהחלפת תמונה תיקח שנייה וחצי במעבר רך */
+            background-repeat: no-repeat;
+            
+            /* טשטוש קל מאוד במרכז כדי לא לגנוב פוקוס, הכהיה עדינה */
+            filter: blur(4px) brightness(0.6); 
+            
+            /* מעבר חלקה של התמונה (1.5 שניות) */
+            transition: background-image 1.5s ease-in-out;
+            background-color: #111;
+            
+            /* !!! ה"קסם": מסכה עגולה שגורמת למרכז להיעלם בהדרגה לכיוון השוליים !!! */
+            -webkit-mask-image: radial-gradient(circle, black 40%, transparent 80%);
+            mask-image: radial-gradient(circle, black 40%, transparent 80%);
+        }
+        
+        /* שלב ב': הילד (::before) - המסגרת הכהה והמטושטשת מאוד מאחור */
+        #game-background::before {
+            content: "";
+            position: absolute;
+            /* מותח את הילד מעבר לגבולות האבא כדי שהטשטוש בקצוות ייראה טוב */
+            top: -50px; left: -50px; right: -50px; bottom: -50px;
+            
+            /* הילד "יורש" אוטומטית את אותה תמונה שהאבא קיבל מה-JS */
+            background-image: inherit; 
+            
+            /* הגדרות למסגרת המטושטשת */
+            background-size: cover; /* מותח וממלא את כל החלל */
+            background-position: center;
+            
+            /* טשטוש כבד מאוד והכהיה חזקה לשוליים */
+            filter: blur(40px) brightness(0.3); 
+            
+            z-index: -2; /* דוחף את המסגרת מאחורי התמונה המרכזית */
         }
     </style>
 </head>
