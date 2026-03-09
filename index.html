@@ -121,42 +121,32 @@
             top: 0; left: 0; right: 0; bottom: 0;
             z-index: -1;
             
-            background-image: url('front-page.jpeg'); /* תמונת ברירת המחדל */
-            background-size: contain; /* שומר על הפרופורציות במרכז */
+            background-image: url('front-page.jpeg'); 
+            background-size: contain; /* שומר על התמונה המלאה בלי לחתוך אותה */
             background-position: center;
             background-repeat: no-repeat;
             
-            /* --- השינויים המרכזיים כאן --- */
-            /* טשטוש מזערי כמעט לא מורגש, והכהיה קלה מאוד כדי שהטקסט הלבן יישאר קריא */
-            filter: blur(1px) brightness(0.85); 
+            /* ניקינו הכל! אין טשטוש, אין מסכות ואין הכהיה. רואים אתכם בול כמו בתמונה */
+            filter: none; 
             
-            /* מעבר חלקה של התמונה (1.5 שניות) */
             transition: background-image 1.5s ease-in-out;
             background-color: #111;
-            
-            /* !!! המסכה - מגדירה איפה התמונה הברורה נגמרת ומתחילה להתמזג לרקע המטושטש מאחור !!! */
-            -webkit-mask-image: radial-gradient(circle, black 60%, transparent 85%);
-            mask-image: radial-gradient(circle, black 60%, transparent 85%);
         }
         
-        /* שלב ב': הילד (::before) - המסגרת הכהה והמטושטשת מאוד מאחור */
+        /* שלב ב': המסגרת שיושבת *מאחורי* התמונה (מטושטשת וכהה קצת כדי לתת קונטרסט) */
         #game-background::before {
             content: "";
             position: absolute;
-            /* מותח את הילד מעבר לגבולות האבא כדי שהטשטוש בקצוות ייראה טוב */
             top: -50px; left: -50px; right: -50px; bottom: -50px;
             
-            /* הילד "יורש" אוטומטית את אותה תמונה שהאבא קיבל מה-JS */
             background-image: inherit; 
-            
-            /* הגדרות למסגרת המטושטשת */
-            background-size: cover; /* מותח וממלא את כל החלל */
+            background-size: cover; /* ממלא את כל השטח הריק מאחור */
             background-position: center;
             
-            /* טשטוש כבד מאוד והכהיה חזקה לשוליים */
-            filter: blur(40px) brightness(0.3); 
+            /* כאן שמנו את הטשטוש - רק על הרקע שמאחוריכם */
+            filter: blur(30px) brightness(0.4); 
             
-            z-index: -2; /* דוחף את המסגרת מאחורי התמונה המרכזית */
+            z-index: -2;
         }
     </style>
 </head>
@@ -252,6 +242,11 @@
                 document.getElementById('pass-error').innerText = "תאריך שגוי,  בזיון שאת לא זוכרת!!";
             }
         }
+        document.getElementById('password-input').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                checkPassword();
+            }
+        });
 
         // פונקציית התחברות
         window.joinGame = function(name) {
