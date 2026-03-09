@@ -107,12 +107,12 @@
 </head>
 <body>
     <div id="password-screen">
-        <h1>נא להזין סיסמה:</h1>
+        <h1>מתי התחלנו לצאת:</h1>
         <input type="password" id="password-input" placeholder="סיסמה...">
         <button class="btn" onclick="checkPassword()">היכנס</button>
         <div id="pass-error" style="color: #ffb8b8; margin-top: 10px; font-weight: bold;"></div>
     </div>
-    
+
     <div id="login-screen">
         <h1>מי משחק עכשיו?</h1>
         <div>
@@ -177,7 +177,7 @@
         window.checkPassword = function() {
             const pass = document.getElementById('password-input').value;
             
-            if (pass === "1234") { // שנה את ה-1234 לסיסמה שאתה רוצה
+            if (pass === "23.3.25") { // שנה את ה-1234 לסיסמה שאתה רוצה
                 document.getElementById('password-screen').style.display = 'none';
                 document.getElementById('login-screen').style.display = 'flex';
             } else {
