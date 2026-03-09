@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>משחק הקלפים שלנו</title>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -23,6 +24,12 @@
             justify-content: center;
             width: 100%;
             height: 100%;
+        }
+        #password-screen {
+            /* הפקודה הזו מוסיפה שכבה כהה שקופה ב-85% מעל התמונה שלכם */
+            background-image: linear-gradient(rgba(44, 62, 80, 0.85), rgba(44, 62, 80, 0.85)), url('card-back.png');
+            background-size: cover;
+            background-position: center;
         }
         #login-screen, #game-screen { display: none; }
         
@@ -107,8 +114,8 @@
 </head>
 <body>
     <div id="password-screen">
-        <h1>מתי התחלנו לצאת:</h1>
-        <input type="password" id="password-input" placeholder="סיסמה...">
+        <h1 style="color: #ffb3b3;">מתי התחלנו לצאת?</h1>
+        <input type="password" id="password-input" placeholder="הכנס תאריך...">
         <button class="btn" onclick="checkPassword()">היכנס</button>
         <div id="pass-error" style="color: #ffb8b8; margin-top: 10px; font-weight: bold;"></div>
     </div>
@@ -176,12 +183,23 @@
         
         window.checkPassword = function() {
             const pass = document.getElementById('password-input').value;
-            
-            if (pass === "23.3.25") { // שנה את ה-1234 לסיסמה שאתה רוצה
-                document.getElementById('password-screen').style.display = 'none';
-                document.getElementById('login-screen').style.display = 'flex';
+            if (pass === "23.3.25") { 
+                // פיצוץ של קונפטי לבבות
+                confetti({
+                    particleCount: 100,
+                    spread: 70,
+                    origin: { y: 0.6 },
+                    shapes: ['heart'],
+                    colors: ['#ff0000', '#ffb3b3']
+                });
+                
+                // ממתינים שנייה וחצי כדי שתראו את הלבבות, ואז מעבירים מסך
+                setTimeout(() => {
+                    document.getElementById('password-screen').style.display = 'none';
+                    document.getElementById('login-screen').style.display = 'flex';
+                }, 1500);
             } else {
-                document.getElementById('pass-error').innerText = "סיסמה שגויה!";
+                document.getElementById('pass-error').innerText = "תאריך שגוי,  בזיון שאת לא זוכרת!!";
             }
         }
 
