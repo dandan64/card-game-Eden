@@ -126,16 +126,17 @@
             background-position: center;
             background-repeat: no-repeat;
             
-            /* טשטוש קל מאוד במרכז כדי לא לגנוב פוקוס, הכהיה עדינה */
-            filter: blur(4px) brightness(0.6); 
+            /* --- השינויים המרכזיים כאן --- */
+            /* טשטוש מזערי כמעט לא מורגש, והכהיה קלה מאוד כדי שהטקסט הלבן יישאר קריא */
+            filter: blur(1px) brightness(0.85); 
             
             /* מעבר חלקה של התמונה (1.5 שניות) */
             transition: background-image 1.5s ease-in-out;
             background-color: #111;
             
-            /* !!! ה"קסם": מסכה עגולה שגורמת למרכז להיעלם בהדרגה לכיוון השוליים !!! */
-            -webkit-mask-image: radial-gradient(circle, black 40%, transparent 80%);
-            mask-image: radial-gradient(circle, black 40%, transparent 80%);
+            /* !!! המסכה - מגדירה איפה התמונה הברורה נגמרת ומתחילה להתמזג לרקע המטושטש מאחור !!! */
+            -webkit-mask-image: radial-gradient(circle, black 60%, transparent 85%);
+            mask-image: radial-gradient(circle, black 60%, transparent 85%);
         }
         
         /* שלב ב': הילד (::before) - המסגרת הכהה והמטושטשת מאוד מאחור */
