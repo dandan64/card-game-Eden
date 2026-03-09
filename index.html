@@ -120,33 +120,43 @@
             position: absolute;
             top: 0; left: 0; right: 0; bottom: 0;
             z-index: -1;
-            
-            background-image: url('front-page.jpeg'); 
-            background-size: contain; /* שומר על התמונה המלאה בלי לחתוך אותה */
-            background-position: center;
-            background-repeat: no-repeat;
-            
-            /* ניקינו הכל! אין טשטוש, אין מסכות ואין הכהיה. רואים אתכם בול כמו בתמונה */
-            filter: none; 
-            
-            transition: background-image 1.5s ease-in-out;
             background-color: #111;
+            overflow: hidden;
+            
+            background-image: url('front-page.jpeg');
+            background-size: 0 0; /* התמונה נטענת לכאן, אבל מוסתרת כדי שהשכבות למטה ישתמשו בה */
+            transition: background-image 1.5s ease-in-out;
         }
-        
-        /* שלב ב': המסגרת שיושבת *מאחורי* התמונה (מטושטשת וכהה קצת כדי לתת קונטרסט) */
+
+        /* 2. השכבה האחורית (הקצוות): מתוחה לכל המסך ומטושטשת מאוד */
         #game-background::before {
             content: "";
             position: absolute;
-            top: -50px; left: -50px; right: -50px; bottom: -50px;
+            top: -40px; left: -40px; right: -40px; bottom: -40px; /* מתיחה להסתרת שוליים לבנים של טשטוש */
             
-            background-image: inherit; 
-            background-size: cover; /* ממלא את כל השטח הריק מאחור */
+            background-image: inherit; /* יורש אוטומטית את התמונה מהאבא */
+            background-size: cover; /* מותח כדי שלא יישארו חללים ריקים */
             background-position: center;
             
-            /* כאן שמנו את הטשטוש - רק על הרקע שמאחוריכם */
-            filter: blur(30px) brightness(0.4); 
+            filter: blur(25px); /* טשטוש כבד רק לקצוות הריקים! בלי הכהיה */
+            z-index: 1;
+            transition: background-image 1.5s ease-in-out;
+        }
+
+        /* 3. השכבה הקדמית (המרכז): התמונה המקורית בשלמותה, טשטוש עדין, בלי הכהיה */
+        #game-background::after {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
             
-            z-index: -2;
+            background-image: inherit; /* יורש אוטומטית את התמונה מהאבא */
+            background-size: contain; /* שומר על הפרופורציות - תמיד במרכז ולא נחתך! */
+            background-position: center;
+            background-repeat: no-repeat;
+            
+            filter: blur(2px); /* טשטוש מינימלי בקושי מורגש כדי לרכך מעט מתחת לקלף */
+            z-index: 2; /* מוודא שזה יושב מעל הרקע המטושטש! */
+            transition: background-image 1.5s ease-in-out;
         }
     </style>
 </head>
