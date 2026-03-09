@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>משחק הקלפים שלנו</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #2c3e50;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+        #login-screen, #game-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+        }
+        #game-screen { display: none; }
+        .btn {
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.2rem;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 10px;
+            font-weight: bold;
+            transition: 0.2s;
+        }
+        .btn:hover { background-color: #c0392b; }
+        
+        /* אזור הקלפים */
+        .cards-container {
+            display: flex;
+            gap: 30px;
+            margin-top: 30px;
+        }
+        .card-slot {
+            width: 200px;
+            height: 300px;
+            perspective: 1000px; /* תלת מימד */
+        }
+        .card-inner {
+            width: 100%;
+            height: 100%;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+            position: relative;
+            cursor: pointer;
+        }
+        .card-slot.flipped .card-inner {
+            transform: rotateY(180deg);
+        }
+        .card-front, .card-back {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            backface-visibility: hidden;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 20px;
+            box-sizing: border-box;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+        }
+        /* גב הקלף - כאן תשים את העיצוב שלך */
+        .card-back {
+            background-color: #34495e;
+            background-image: url('שים_כאן_לינק_לתמונה_של_גב_הקלף.jpg');
+            background-size: cover;
+            background-position: center;
+            border: 2px solid #ecf0f1;
+            color: white;
+            font-size: 1.5rem;
+        }
+        /* פני הקלף (המשימה) */
+        .card-front {
+            background-color: #ecf0f1;
+            color: #2c3e50;
+            transform: rotateY(180deg);
+            font-size: 1.3rem;
+            flex-direction: column;
+        }
+        .category { font-size: 0.9rem; color: #e74c3c; margin-bottom: 10px; font-weight: bold; }
+        #status-msg { margin-top: 20px; font-size: 1.2rem; min-height: 30px; color: #f1c40f;}
+    </style>
+</head>
+<body>
+
+    <div id="login-screen">
+        <h1>מי משחק עכשיו?</h1>
+        <div>
+            <button class="btn" onclick="joinGame('דניאל')">דניאל</button>
+            <button class="btn" onclick="joinGame('עדן')">עדן</button>
+        </div>
+    </div>
+
+    <div id="game-screen">
+        <h2 id="welcome-msg"></h2>
+        <div id="cards-count">קלפים נותרו: --</div>
+        
+        <div class="cards-container">
+            <div class="card-slot" id="deck-slot" onclick="drawCard()">
+                <div class="card-inner">
+                    <div class="card-back">הערימה (שלוף)</div>
+                </div>
+            </div>
+
+            <div class="card-slot" id="active-card-slot">
+                <div class="card-inner" id="active-card-inner">
+                    <div class="card-back" id="active-card-back">קלף של...</div>
+                    <div class="card-front">
+                        <div class="category" id="card-category"></div>
+                        <div id="card-text"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="status-msg"></div>
+        <button class="btn" style="margin-top: 50px; background-color: #7f8c8d;" onclick="resetGame()">ערבב והתחל מחדש</button>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getDatabase, ref, set, get, onValue, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+        // !!! הדבק כאן את ה-firebaseConfig שלך מ-Firebase Console !!!
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+            databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_PROJECT_ID.appspot.com",
+            messagingSenderId: "YOUR_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        // מאגר הקלפים שלנו
+        const allCards = [
+            { id: 1, category: "רומנטיקה", text: "תאר את הדייט הראשון שלנו מהנקודת מבט שלך." },
+            { id: 2, category: "הומור זוגי", text: "מה הדבר הכי מוזר שאני עושה מתוך שינה?" },
+            { id: 3, category: "אתגרים", text: "תן לי נשיקה במקום הכי מפתיע שאתה יכול לחשוב עליו עכשיו." },
+            // תוסיף כאן את כל שאר הקלפים שלך...
+        ];
+
+        let currentPlayer = "";
+
+        // פונקציית התחברות
+        window.joinGame = function(name) {
+            currentPlayer = name;
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('game-screen').style.display = 'flex';
+            document.getElementById('welcome-msg').innerText = `היי ${currentPlayer}!`;
+            
+            // האזנה לשינויים במסד הנתונים
+            listenToGameState();
+        }
+
+        // פונקציה לערבוב מערך
+        function shuffleArray(array) {
+            let shuffled = [...array];
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+            return shuffled;
+        }
+
+        // אתחול משחק חדש ב-DB
+        window.resetGame = async function() {
+            const shuffled = shuffleArray(allCards);
+            await set(ref(db, 'gameState'), {
+                deck: shuffled,
+                activeCard: null
+            });
+        }
+
+        // שליפת קלף
+        window.drawCard = async function() {
+            const snapshot = await get(ref(db, 'gameState/deck'));
+            let deck = snapshot.val();
+            
+            if (!deck || deck.length === 0) {
+                alert("הערימה ריקה! הגיע הזמן לערבב מחדש.");
+                return;
+            }
+
+            // מוציאים את הקלף העליון (האחרון במערך)
+            const cardToDraw = deck.pop();
+
+            // מעדכנים את ה-DB עם הערימה החדשה והקלף הפעיל
+            await update(ref(db, 'gameState'), {
+                deck: deck,
+                activeCard: {
+                    ...cardToDraw,
+                    drawnBy: currentPlayer
+                }
+            });
+        }
+
+        // האזנה לשינויים בזמן אמת
+        function listenToGameState() {
+            const gameStateRef = ref(db, 'gameState');
+            onValue(gameStateRef, (snapshot) => {
+                const data = snapshot.val();
+                if (!data) {
+                    // אם אין משחק פעיל, נייצר אחד
+                    resetGame();
+                    return;
+                }
+
+                // עדכון ספירת קלפים
+                const deckCount = data.deck ? data.deck.length : 0;
+                document.getElementById('cards-count').innerText = `קלפים נותרו: ${deckCount}`;
+
+                const activeCardSlot = document.getElementById('active-card-slot');
+                const statusMsg = document.getElementById('status-msg');
+
+                if (data.activeCard) {
+                    if (data.activeCard.drawnBy === currentPlayer) {
+                        // אם אני שלפתי את הקלף - תראה לי אותו
+                        document.getElementById('card-category').innerText = data.activeCard.category;
+                        document.getElementById('card-text').innerText = data.activeCard.text;
+                        activeCardSlot.classList.add('flipped');
+                        statusMsg.innerText = "זה הקלף שלך!";
+                    } else {
+                        // אם בן/בת הזוג שלף - תראה לי את הגב עם הודעה
+                        activeCardSlot.classList.remove('flipped');
+                        document.getElementById('active-card-back').innerText = `הקלף של ${data.activeCard.drawnBy}`;
+                        statusMsg.innerText = `${data.activeCard.drawnBy} שלפ/ה קלף. מחכים שיסיימו...`;
+                    }
+                } else {
+                    // אין קלף פעיל
+                    activeCardSlot.classList.remove('flipped');
+                    document.getElementById('active-card-back').innerText = "אין קלף פעיל";
+                    statusMsg.innerText = "תור מי לשלוף?";
+                }
+            });
+        }
+    </script>
+</body>
+</html>
