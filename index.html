@@ -373,7 +373,14 @@
                        // אם בן/בת הזוג שלף - תראה לי את הגב עם הודעה
                        activeCardSlot.classList.remove('flipped');
                         activeCardBack.innerHTML = `<div class="partner-msg">הקלף של ${data.activeCard.drawnBy}</div>`;
-                        statusMsg.innerText = `${data.activeCard.drawnBy} שלפ/ה קלף. מחכים שיסיימו...`;
+                        //statusMsg.innerText = `${data.activeCard.drawnBy} שלפ/ה קלף. מחכים שיסיימו...`;
+                        const waitingMessage = [
+                            `${data.activeCard.drawnBy} מחזיק/ה סוד... 🤫`,
+                            `משהו טוב בדרך אליך ✨`,
+                            `${data.activeCard.drawnBy} בחר/ה בשבילך — תתכונן\י 💛`
+                        ];
+                        const randomWait = waitingMessages[Math.floor(Math.random() * waitingMessages.length)];
+                        statusMsg.innerText = randomWait;
                     }
                 } else {
                     gameBg.style.backgroundImage = `url('front-page.jpeg')`;
