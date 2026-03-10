@@ -110,6 +110,21 @@
         }
 
         #status-msg { margin-top: 20px; font-size: 1.2rem; min-height: 30px; color: #f1c40f;}
+        #welcome-msg { 
+            font-size: 1.1rem;
+            opacity: 0.7;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+         }
+         .status-pulse{
+            animation: pulse 0.4s ease-out;
+         }
+         @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); color: #fff; }
+            100% { transform: scale(1); }
+        }
+            
         @media (max-width: 600px) {
             .card-slot { width: 160px; height: 240px; }
             .cards-container { gap: 15px; }
@@ -205,7 +220,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getDatabase, ref, set, get, onValue, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+        import { getDatabase, ref, set, get, onValue, update, runTransaction } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
         // !!! הדבק כאן את ה-firebaseConfig שלך מ-Firebase Console !!!
         const firebaseConfig = {
@@ -230,6 +245,7 @@
         const cardBack = "card-back.png";
 
         let currentPlayer = "";
+        let unsubscribeGameState = null; 
         
         window.checkPassword = function() {
             const pass = document.getElementById('password-input').value;
@@ -291,31 +307,44 @@
 
         // שליפת קלף
         window.drawCard = async function() {
-            const snapshot = await get(ref(db, 'gameState/deck'));
-            let deck = snapshot.val();
-            
-            if (!deck || deck.length === 0) {
-                document.getElementById('status-msg').innerText = "הקלפים הסתיימו, לעוד משחקים ורעיונות אנא צרו קשר! ❤️";
-                return;
-            }
+            const gameref = ref(db, 'gameState');
+        
+            try{
+                const transactionResult = await runTransaction(gameref, (currentData) => {
+                    if (currentData === null || !currentData.deck || currentData.deck.length === 0) {
+                        return; // אין קלפים לשלוף
+                    }
+        
+                    const deck = [...currentData.deck];
+                    const cardDraw = deck.pop();
 
-            // מוציאים את הקלף העליון (האחרון במערך)
-            const cardToDraw = deck.pop();
+                    return{
+                        ...currentData,
+                        deck: deck,
+                        activeCard: {
+                            ...cardDraw,
+                            drawnBy: currentPlayer
+                        }
+                    };
+                });
 
-            // מעדכנים את ה-DB עם הערימה החדשה והקלף הפעיל
-            await update(ref(db, 'gameState'), {
-                deck: deck,
-                activeCard: {
-                    ...cardToDraw,
-                    drawnBy: currentPlayer
-                }
-            });
-        }
+                if(!transactionResult.committed){
+                    document.getElementById('status-msg').innerText = "נגמרו הקלפים, נכון שאני הכי טוב? אוהב אותך מלא! ❤️";
+                    }
+                } catch (error) {
+                    console.error("שגיאה בשליפת קלף:", error);
+                    document.getElementById('status-msg').innerText = "אופס היה מרוץ תהליכים, ננסה שוב";
+            }}
 
         // האזנה לשינויים בזמן אמת
         function listenToGameState() {
             const gameStateRef = ref(db, 'gameState');
-            onValue(gameStateRef, (snapshot) => {
+            if (unsubscribeGameState) {
+                unsubscribeGameState();
+            }
+
+            // 2. שמירת פונקציית הניתוק החדשה יחד עם פתיחת ההאזנה
+            unsubscribeGameState = onValue(gameStateRef, (snapshot) => {
                 const data = snapshot.val();
                 if (!data) {
                     // אם אין משחק פעיל, נייצר אחד
@@ -353,6 +382,9 @@
                     activeCardBack.innerHTML = '';
                     statusMsg.innerText = "תור מי לשלוף?";
                 }
+                statusMsg.classList.remove('status-pulse');
+                void statusMsg.offsetWidth; // טריגר לאיפוס האנימציה
+                statusMsg.classList.add('status-pulse');
             });
         }
         window.onload = function() {
