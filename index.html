@@ -374,7 +374,7 @@
                        activeCardSlot.classList.remove('flipped');
                         activeCardBack.innerHTML = `<div class="partner-msg">הקלף של ${data.activeCard.drawnBy}</div>`;
                         //statusMsg.innerText = `${data.activeCard.drawnBy} שלפ/ה קלף. מחכים שיסיימו...`;
-                        const waitingMessage = [
+                        const waitingMessages = [
                             `${data.activeCard.drawnBy} מחזיק/ה סוד... 🤫`,
                             `משהו טוב בדרך אליך ✨`,
                             `${data.activeCard.drawnBy} בחר/ה בשבילך — תתכונן\י 💛`
@@ -394,14 +394,14 @@
                 statusMsg.classList.add('status-pulse');
             });
         }
-        window.onload = function() {
-            const savedPlayer = sessionStorage.getItem('savedPlayer');
-            if (savedPlayer) {
-                // אם מצאנו שם שמור בזיכרון, נדלג ישר למשחק
-                document.getElementById('password-screen').style.display = 'none';
-                joinGame(savedPlayer);
-            }
-        };
+        // window.onload = function() {
+        //     const savedPlayer = sessionStorage.getItem('savedPlayer');
+        //     if (savedPlayer) {
+        //         // אם מצאנו שם שמור בזיכרון, נדלג ישר למשחק
+        //         document.getElementById('password-screen').style.display = 'none';
+        //         joinGame(savedPlayer);
+        //     }
+        // };
     </script>
 </body>
 </html>
