@@ -1,191 +1,147 @@
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>משחק הקלפים שלנו</title>
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-    <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #2c3e50;
-            color: white;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-            overflow: hidden;
-        }
-        #password-screen, #login-screen, #game-screen {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            width: 100%;
-            height: 100%;
-        }
-        #password-screen {
-            /* הפקודה הזו מוסיפה שכבה כהה שקופה ב-85% מעל התמונה שלכם */
-            background-image: linear-gradient(rgba(44, 62, 80, 0.85), rgba(44, 62, 80, 0.85)), url('front-page.jpeg');
-            background-size: cover;
-            background-position: center;
-        }
-        #login-screen, #game-screen { display: none; }
-        
-        #password-input {
-            padding: 10px;
-            font-size: 1.2rem;
-            margin-bottom: 20px;
-            text-align: center;
-            border-radius: 8px;
-            border: none;
-        }
-        .btn {
-            background-color: #e74c3c;
-            color: white;
-            border: none;
-            padding: 15px 30px;
-            font-size: 1.2rem;
-            border-radius: 8px;
-            cursor: pointer;
-            margin: 10px;
-            font-weight: bold;
-            transition: 0.2s;
-        }
-        .btn:hover { background-color: #c0392b; }
-        
-        /* אזור הקלפים */
-        .cards-container {
-            display: flex;
-            gap: 30px;
-            margin-top: 30px;
-        }
-        .card-slot {
-            width: 250px;
-            height: 350px;
-            perspective: 1000px; /* תלת מימד */
-        }
-        .card-inner {
-            width: 100%;
-            height: 100%;
-            transition: transform 0.6s;
-            transform-style: preserve-3d;
-            position: relative;
-            cursor: pointer;
-        }
-        .card-slot.flipped .card-inner {
-            transform: rotateY(180deg);
-        }
-        .card-front, .card-back {
-            width: 100%;
-            height: 100%;
-            position: absolute;
-            backface-visibility: hidden;
-            border-radius: 15px;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            font-size: 1.2rem;
-        }
-        /* גב הקלף - כאן תשים את העיצוב שלך */
-        .card-back {
-            background-image: url('card-back.png');
-        }
-        /* פני הקלף (המשימה) */
-        .card-front {
-            transform: rotateY(180deg);
-            background-color: #ecf0f1
-        }
-        .partner-msg {
-            background: rgba(0,0,0,0.7);
-            padding: 10px;
-            border-radius: 5px;
-            color: white;
-        }
-
-        #status-msg { margin-top: 20px; font-size: 1.2rem; min-height: 30px; color: #f1c40f;}
-        #welcome-msg { 
-            font-size: 1.1rem;
-            opacity: 0.7;
-            letter-spacing: 1px;
-            margin-bottom: 5px;
-         }
-         .status-pulse{
-            animation: pulse 0.4s ease-out;
-         }
-         @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.1); color: #fff; }
-            100% { transform: scale(1); }
-        }
-            
-        @media (max-width: 600px) {
-            .card-slot { width: 160px; height: 240px; }
-            .cards-container { gap: 15px; }
-            .card-front, .card-back { font-size: 1rem; }
-            h1 { font-size: 1.5rem; }
-        }
-        #game-background {
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            z-index: -1;
-            background-color: #111;
-            overflow: hidden;
-            
-            background-image: url('front-page.jpeg');
-            background-size: 0 0; /* התמונה נטענת לכאן, אבל מוסתרת כדי שהשכבות למטה ישתמשו בה */
-            transition: background-image 1.5s ease-in-out;
-        }
-
-        /* 2. השכבה האחורית (הקצוות): מתוחה לכל המסך ומטושטשת מאוד */
-        #game-background::before {
-            content: "";
-            position: absolute;
-            top: -40px; left: -40px; right: -40px; bottom: -40px; /* מתיחה להסתרת שוליים לבנים של טשטוש */
-            
-            background-image: inherit; /* יורש אוטומטית את התמונה מהאבא */
-            background-size: cover; /* מותח כדי שלא יישארו חללים ריקים */
-            background-position: center;
-            
-            filter: blur(25px); /* טשטוש כבד רק לקצוות הריקים! בלי הכהיה */
-            z-index: 1;
-            transition: background-image 1.5s ease-in-out;
-        }
-
-        /* 3. השכבה הקדמית (המרכז): התמונה המקורית בשלמותה, טשטוש עדין, בלי הכהיה */
-        #game-background::after {
-            content: "";
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            
-            background-image: inherit; /* יורש אוטומטית את התמונה מהאבא */
-            background-size: contain; /* שומר על הפרופורציות - תמיד במרכז ולא נחתך! */
-            background-position: center;
-            background-repeat: no-repeat;
-            
-            filter: blur(2px); /* טשטוש מינימלי בקושי מורגש כדי לרכך מעט מתחת לקלף */
-            z-index: 2; /* מוודא שזה יושב מעל הרקע המטושטש! */
-            transition: background-image 1.5s ease-in-out;
-        }
-    </style>
-</head>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>משחק הקלפים שלנו</title>
+        <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;700&display=swap" rel="stylesheet">
+        <style>
+            :root {
+                --red:        #e74c3c;
+                --red-dark:   #c0392b;
+                --gold:       #f1c40f;
+                --gold-soft:  #f9d94e;
+                --slate:      #2c3e50;
+            }
+    
+            *, *::before, *::after { box-sizing: border-box; }
+    
+            body {
+                font-family: 'Rubik', sans-serif;
+                background-color: var(--slate);
+                color: white;
+                display: flex; flex-direction: column; align-items: center;
+                min-height: 100vh; margin: 0; overflow: hidden;
+            }
+    
+            #password-screen, #login-screen, #game-screen {
+                display: flex; flex-direction: column; align-items: center; justify-content: center;
+                width: 100%; height: 100vh; position: relative; z-index: 1;
+            }
+    
+            #password-screen {
+                background-image: linear-gradient(rgba(44, 62, 80, 0.82), rgba(44, 62, 80, 0.82)), url('front-page.jpeg');
+                background-size: cover; background-position: center;
+                animation: screenReveal 0.7s cubic-bezier(0.22,1,0.36,1) both;
+            }
+            #login-screen  { display: none; }
+            #game-screen   { display: none; justify-content: flex-start; padding-top: 28px; }
+    
+            @keyframes screenReveal {
+                from { opacity: 0; transform: scale(1.03); }
+                to   { opacity: 1; transform: scale(1); }
+            }
+    
+            .screen-title { font-size: clamp(1.4rem, 4vw, 2rem); font-weight: 700; margin-bottom: 24px; color: #ffb3b3; text-shadow: 0 2px 12px rgba(0,0,0,0.4); }
+            .login-subtitle { font-weight: 300; font-size: 1rem; opacity: 0.65; margin-bottom: 24px; }
+    
+            #password-input {
+                padding: 12px 20px; font-size: 1.15rem; font-family: 'Rubik', sans-serif; margin-bottom: 16px;
+                text-align: center; border-radius: 50px; border: 2px solid transparent; background: rgba(255,255,255,0.95);
+                color: #333; width: 220px; outline: none; transition: border-color 0.2s, box-shadow 0.2s;
+            }
+            #password-input:focus { border-color: #ff8080; box-shadow: 0 0 0 4px rgba(255,128,128,0.2); }
+    
+            #pass-error {
+                color: #ffb8b8; margin-top: 8px; font-weight: 500; font-size: 0.95rem; min-height: 24px;
+            }
+            .shake-animation { animation: shake 0.4s ease both; }
+            @keyframes shake {
+                0%,100%{ transform: translateX(0); }
+                20%    { transform: translateX(-8px); }
+                60%    { transform: translateX(8px); }
+            }
+    
+            .btn {
+                font-family: 'Rubik', sans-serif; background: linear-gradient(135deg, var(--red), #c0392b);
+                color: white; border: none; padding: 13px 32px; font-size: 1.1rem; font-weight: 600;
+                border-radius: 50px; cursor: pointer; margin: 8px;
+                box-shadow: 0 6px 20px rgba(231,76,60,0.4), inset 0 1px 0 rgba(255,255,255,0.15);
+                transition: transform 0.15s ease, box-shadow 0.15s ease;
+            }
+            .btn:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(231,76,60,0.5); }
+            .btn:active { transform: translateY(0) scale(0.97); }
+            .btn-secondary { background: rgba(255,255,255,0.12); box-shadow: none; border: 1px solid rgba(255,255,255,0.2); font-weight: 400; }
+    
+            #welcome-msg { font-size: 0.85rem; font-weight: 300; opacity: 0.55; letter-spacing: 2.5px; text-transform: uppercase; margin: 0 0 4px 0; }
+            #cards-count { font-size: 0.95rem; font-weight: 400; opacity: 0.8; margin-bottom: 0; min-height: 22px; transition: opacity 0.3s; }
+            #cards-count.milestone { color: var(--gold-soft); font-weight: 600; opacity: 1; }
+    
+            .cards-container { display: flex; gap: 28px; margin-top: 24px; align-items: center; }
+            .card-slot { width: 220px; height: 320px; perspective: 1200px; transition: transform 0.15s ease; }
+            #deck-slot:hover { transform: translateY(-4px); }
+            #deck-slot:active { transform: translateY(0) scale(0.98); }
+    
+            .card-inner { width: 100%; height: 100%; transition: transform 0.65s cubic-bezier(0.4, 0, 0.2, 1); transform-style: preserve-3d; position: relative; cursor: pointer; }
+            .card-slot.flipped .card-inner { transform: rotateY(180deg); }
+    
+            .card-front, .card-back {
+                width: 100%; height: 100%; position: absolute; backface-visibility: hidden; border-radius: 18px;
+                box-shadow: 0 16px 40px rgba(0,0,0,0.45), 0 2px 8px rgba(0,0,0,0.2);
+                background-size: cover; background-position: center; display: flex; align-items: center; justify-content: center; text-align: center;
+            }
+            .card-back { background-image: url('card-back.png'); background-color: #1a252f; }
+            .card-back-label { background: rgba(0,0,0,0.45); color: white; padding: 10px 18px; border-radius: 30px; backdrop-filter: blur(4px); }
+            .card-front { transform: rotateY(180deg); background-color: #f8f0e8; }
+            .partner-msg { background: rgba(0,0,0,0.65); backdrop-filter: blur(6px); padding: 12px 20px; border-radius: 10px; color: white; }
+    
+            #status-msg { margin-top: 22px; font-size: 1.15rem; font-weight: 500; min-height: 32px; color: var(--gold); text-shadow: 0 1px 8px rgba(0,0,0,0.3); }
+            .status-pulse { animation: pulse 0.45s cubic-bezier(0.22,1,0.36,1); }
+            @keyframes pulse { 0% { transform: scale(1); opacity: 0.4; } 50% { transform: scale(1.08); opacity: 1; color: #fff; } 100% { transform: scale(1); opacity: 1; } }
+    
+            .reset-area { margin-top: auto; padding: 16px 0 24px; }
+    
+            /* הרקע המקורי שלך - שמרנו עליו! */
+            #game-background {
+                position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: -1;
+                background-color: #111; overflow: hidden;
+                background-image: url('front-page.jpeg'); background-size: 0 0;
+                transition: background-image 1.5s ease-in-out;
+            }
+            #game-background::before {
+                content: ""; position: absolute; top: -40px; left: -40px; right: -40px; bottom: -40px;
+                background-image: inherit; background-size: cover; background-position: center;
+                filter: blur(25px); z-index: 1; transition: background-image 1.5s ease-in-out;
+            }
+            #game-background::after {
+                content: ""; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+                background-image: inherit; background-size: contain; background-position: center; background-repeat: no-repeat;
+                filter: blur(2px); z-index: 2; transition: background-image 1.5s ease-in-out;
+            }
+            #game-background-overlay { position: fixed; inset: 0; z-index: 0; background: radial-gradient(ellipse at center, rgba(20,30,40,0.0) 0%, rgba(20,30,40,0.6) 100%); pointer-events: none; }
+    
+            @media (max-width: 600px) {
+                #game-screen { padding-top: 20px; } .card-slot { width: 150px; height: 220px; } .cards-container { gap: 14px; margin-top: 18px; }
+            }
+        </style>
+    </head>
 <body>
     <div id="game-background"></div>
+    <div id="game-background-overlay"></div>
+
     <div id="password-screen">
-        <h1 style="color: #ffb3b3;">מתי התחלנו לצאת?</h1>
+        <h1 class="screen-title">מתי התחלנו לצאת?</h1>
         <input type="tel" id="password-input" placeholder="הכנס תאריך...">
         <button class="btn" onclick="checkPassword()">בואי נתחיל ❤️</button>
-        <div id="pass-error" style="color: #ffb8b8; margin-top: 10px; font-weight: bold;"></div>
+        <div id="pass-error"></div>
     </div>
 
     <div id="login-screen">
-        <h1>של מי התור להוביל?</h1>
+        <h1 class="screen-title" style="color:white;">של מי התור להוביל?</h1>
+        <p class="login-subtitle">בחר/י את שמך כדי להתחיל</p>
         <div>
             <button class="btn" onclick="joinGame('דניאל')">דניאל</button>
             <button class="btn" onclick="joinGame('עדן')">עדן</button>
@@ -194,28 +150,28 @@
 
     <div id="game-screen">
         <h2 id="welcome-msg"></h2>
-        <div id="cards-count">הפתעות בקופה: --</div>
-        
+        <div id="cards-count">טוען...</div>
+
         <div class="cards-container">
             <div class="card-slot" id="deck-slot" onclick="drawCard()">
                 <div class="card-inner">
-                    <div class="card-back"> לחץ/י לשליפה</div>
+                    <div class="card-back"><span class="card-back-label">לחץ/י לשליפה</span></div>
                 </div>
             </div>
 
             <div class="card-slot" id="active-card-slot">
                 <div class="card-inner" id="active-card-inner">
-                    <div class="card-back" id="active-card-back">קלף של...</div>
-                    <div class="card-front">
-                        <div class="category" id="card-category"></div>
-                        <div id="card-text"></div>
-                    </div>
+                    <div class="card-back" id="active-card-back"><span id="active-card-back-label"></span></div>
+                    <div class="card-front"><div class="card-front-content" id="card-text"></div></div>
                 </div>
             </div>
         </div>
-        
+
         <div id="status-msg"></div>
-        <button class="btn" style="margin-top: 50px; background-color: #7f8c8d;" onclick="resetGame()">ערבב והתחל מחדש</button>
+
+        <div class="reset-area">
+            <button class="btn btn-secondary" onclick="resetGame()">ערבב והתחל מחדש ↺</button>
+        </div>
     </div>
 
     <script type="module">
@@ -246,28 +202,61 @@
 
         let currentPlayer = "";
         let unsubscribeGameState = null; 
+        /* ── פונקציית אבני הדרך (מונה קלפים רומנטי) ── */
+        function getCardCountMessage(count) {
+            const milestones = {
+                18: "כל ההפתעות מחכות לכם ✨",
+                10: "חצי הדרך — הכי טוב עוד לפניכם 💛",
+                5:  "עוד חמש הפתעות. תטעמו לאט 🌹",
+                1:  "הפתעה אחרונה. תעשו אותה שווה 🌹",
+                0:  "כל הקלפים נחשפו. הסיפור שלכם רק מתחיל ❤️"
+            };
+            const el = document.getElementById('cards-count');
+            // אם הגענו למספר מיוחד, נצבע אותו בזהב ונוסיף את הטקסט
+            if (milestones[count] !== undefined) {
+                el.classList.add('milestone');
+                return milestones[count];
+            }
+            // אחרת, טקסט רגיל
+            el.classList.remove('milestone');
+            return `עוד ${count} הפתעות`;
+        }
+
+        /* ── פונקציית פעימת הלב (סטטוס) ── */
+        function setStatusMsg(text) {
+            const el = document.getElementById('status-msg');
+            el.innerText = text;
+            // הטריק הזה מאפס את האנימציה כדי שהיא תקרה שוב בכל פעם שמחליפים טקסט
+            el.classList.remove('status-pulse');
+            void el.offsetWidth; 
+            el.classList.add('status-pulse');
+        }
+
+        /* ── הודעות המתנה ── */
+        const waitingMessages = [
+            `מחזיק/ה סוד... 🤫`,
+            `משהו טוב בדרך אליך ✨`,
+            `בחר/ה בשבילך — תתכונן/י 💛` 
+        ];
         
         window.checkPassword = function() {
-            const pass = document.getElementById('password-input').value;
+            const pass = document.getElementById('password-input').value.trim();
+            const errEl = document.getElementById('pass-error');
             if (pass === "23.3.25") { 
-                // פיצוץ של קונפטי לבבות
-                confetti({
-                    particleCount: 1000,
-                    spread: 700,
-                    origin: { y: 0.6 },
-                    shapes: ['heart'],
-                    colors: ['#ff0000', '#ffb3b3']
-                });
-                
-                // ממתינים שנייה וחצי כדי שתראו את הלבבות, ואז מעבירים מסך
+                confetti({ particleCount: 1000, spread: 700, origin: { y: 0.6 }, shapes: ['heart'], colors: ['#ff0000', '#ffb3b3'] });
                 setTimeout(() => {
                     document.getElementById('password-screen').style.display = 'none';
                     document.getElementById('login-screen').style.display = 'flex';
                 }, 1500);
             } else {
-                document.getElementById('pass-error').innerText = "תאריך שגוי,  בזיון שאת לא זוכרת!!";
+                // מפעיל אנימציית רעידה כשהסיסמה שגויה
+                errEl.classList.remove('shake-animation');
+                void errEl.offsetWidth;
+                errEl.classList.add('shake-animation');
+                errEl.innerText = "תאריך שגוי, בזיון שאת לא זוכרת!! 😤";
             }
         }
+
         document.getElementById('password-input').addEventListener('keypress', function (e) {
             if (e.key === 'Enter') {
                 checkPassword();
@@ -329,13 +318,14 @@
                 });
 
                 if(!transactionResult.committed){
-                    document.getElementById('status-msg').innerText = "נגמרו הקלפים, נכון שאני הכי טוב? אוהב אותך מלא! ❤️";
-                    }
+                    setStatusMsg("נגמרו הקלפים, נכון שאני הכי טוב? אוהב אותך מלא! ❤️");
+                }
                 } catch (error) {
                     console.error("שגיאה בשליפת קלף:", error);
-                    document.getElementById('status-msg').innerText = "אופס היה מרוץ תהליכים, ננסה שוב";
-            }}
+                    setStatusMsg("אופס היה race condition, ננסה שוב");
+                }
 
+        // האזנה לשינויים בזמן אמת
         // האזנה לשינויים בזמן אמת
         function listenToGameState() {
             const gameStateRef = ref(db, 'gameState');
@@ -343,65 +333,49 @@
                 unsubscribeGameState();
             }
 
-            // 2. שמירת פונקציית הניתוק החדשה יחד עם פתיחת ההאזנה
             unsubscribeGameState = onValue(gameStateRef, (snapshot) => {
                 const data = snapshot.val();
                 if (!data) {
-                    // אם אין משחק פעיל, נייצר אחד
                     resetGame();
                     return;
                 }
 
-                // עדכון ספירת קלפים
+                // 1. שימוש במונה הקלפים החדש
                 const deckCount = data.deck ? data.deck.length : 0;
-                document.getElementById('cards-count').innerText = `קלפים נותרו: ${deckCount}`;
+                document.getElementById('cards-count').innerText = getCardCountMessage(deckCount);
 
                 const activeCardSlot = document.getElementById('active-card-slot');
-                const statusMsg = document.getElementById('status-msg');
                 const cardFrontImage = document.querySelector('.card-front');
                 const activeCardBack = document.getElementById('active-card-back');
                 const gameBg = document.getElementById('game-background');
 
                 if (data.activeCard) {
+                    // הרקע המקורי והחלק שלך!
                     gameBg.style.backgroundImage = `url('${data.activeCard.bg}')`;
+                    
                     if (data.activeCard.drawnBy === currentPlayer) {
-                        // אם אני שלפתי את הקלף - תראה לי אותו
+                        // הקלף אצלי
                         cardFrontImage.style.backgroundImage = `url('${data.activeCard.image}')`;
                         activeCardSlot.classList.add('flipped');
-                        statusMsg.innerText = "זה הקלף שלך!";
+                        setStatusMsg("זה הקלף שלך!"); // שימוש בפונקציית הפעימה
                     } else {
-                       // אם בן/בת הזוג שלף - תראה לי את הגב עם הודעה
+                       // הקלף אצל הבת זוג
                        activeCardSlot.classList.remove('flipped');
-                        activeCardBack.innerHTML = `<div class="partner-msg">הקלף של ${data.activeCard.drawnBy}</div>`;
-                        //statusMsg.innerText = `${data.activeCard.drawnBy} שלפ/ה קלף. מחכים שיסיימו...`;
-                        const waitingMessages = [
-                            `${data.activeCard.drawnBy} מחזיק/ה סוד... 🤫`,
-                            `משהו טוב בדרך אליך ✨`,
-                            `${data.activeCard.drawnBy} בחר/ה בשבילך — תתכונן\י 💛`
-                        ];
-                        const randomWait = waitingMessages[Math.floor(Math.random() * waitingMessages.length)];
-                        statusMsg.innerText = randomWait;
+                       activeCardBack.innerHTML = `<div class="partner-msg">הקלף של ${data.activeCard.drawnBy}</div>`;
+                       
+                       // בחירת הודעת המתנה רנדומלית וחיבור השם שלה אליה
+                       const randomWait = waitingMessages[Math.floor(Math.random() * waitingMessages.length)];
+                       setStatusMsg(`${data.activeCard.drawnBy} ${randomWait}`);
                     }
                 } else {
-                    gameBg.style.backgroundImage = `url('front-page.jpeg')`;
                     // אין קלף פעיל
+                    gameBg.style.backgroundImage = `url('front-page.jpeg')`;
                     activeCardSlot.classList.remove('flipped');
                     activeCardBack.innerHTML = '';
-                    statusMsg.innerText = "תור מי לשלוף?";
+                    setStatusMsg("תור מי לשלוף?");
                 }
-                statusMsg.classList.remove('status-pulse');
-                void statusMsg.offsetWidth; // טריגר לאיפוס האנימציה
-                statusMsg.classList.add('status-pulse');
             });
         }
-        // window.onload = function() {
-        //     const savedPlayer = sessionStorage.getItem('savedPlayer');
-        //     if (savedPlayer) {
-        //         // אם מצאנו שם שמור בזיכרון, נדלג ישר למשחק
-        //         document.getElementById('password-screen').style.display = 'none';
-        //         joinGame(savedPlayer);
-        //     }
-        // };
     </script>
 </body>
 </html>
