@@ -203,23 +203,26 @@
         let currentPlayer = "";
         let unsubscribeGameState = null; 
         /* ── פונקציית אבני הדרך (מונה קלפים רומנטי) ── */
-        function getCardCountMessage(count) {
-            const milestones = {
-                18: "כל ההפתעות מחכות לנו ✨",
-                10: "חצי הדרך — הכי טוב עוד לפנינו 💛",
-                5:  "עוד חמש הפתעות. 🌹",
-                1:  "הפתעה אחרונה 🌹",
-                0:  "כל הקלפים נחשפו. הסיפור שלנו רק מתחיל ❤️"
+        // DeckAgent — רק מחזיר נתונים
+        function getCardCountData(count) {
+            const milestones = { 18: "...", 10: "...", 5: "...", 1: "...", 0: "..." };
+            return {
+                text: milestones[count] || `עוד ${count} הפתעות`,
+                isMilestone: milestones[count] !== undefined
             };
+        }
+
+        // UIAgent — רק מציג
+        function renderCardCount(count) {
+            const { text, isMilestone } = getCardCountData(count);
             const el = document.getElementById('cards-count');
-            // אם הגענו למספר מיוחד, נצבע אותו בזהב ונוסיף את הטקסט
-            if (milestones[count] !== undefined) {
-                el.classList.add('milestone');
-                return milestones[count];
+            el.innerText = text;
+            el.classList.toggle('milestone', isMilestone);
+            
+            // בונוס: קונפטי ב-milestone!
+            if (isMilestone && count > 0) {
+                confetti({ particleCount: 80, spread: 60, origin: { y: 0.5 } });
             }
-            // אחרת, טקסט רגיל
-            el.classList.remove('milestone');
-            return `עוד ${count} הפתעות`;
         }
 
         /* ── פונקציית פעימת הלב (סטטוס) ── */
@@ -233,12 +236,20 @@
         }
 
         /* ── הודעות המתנה ── */
-        const waitingMessages = [
-            `מחזיק/ה סוד... 🤫`,
-            `משהו טוב בדרך אליך ✨`,
-            `בחר/ה בשבילך — תתכונן/י 💛` 
-        ];
-        
+        const waitingMessages = {
+            'דניאל': [
+            `דניאל בוחר משהו בשבילך... 💙`,
+            `דניאל מכין הפתעה ✨`,
+            `חכי — זה הולך להיות טוב 🤫`
+            ],
+            'עדן': [
+                `עדן בוחרת משהו בשבילך... 💛`,
+                `עדן מכינה הפתעה ✨`,
+                `חכה — זה הולך להיות טוב 🤫`
+            ]
+        };
+
+       
         window.checkPassword = function() {
             const pass = document.getElementById('password-input').value.trim();
             const errEl = document.getElementById('pass-error');
@@ -290,14 +301,20 @@
             const shuffled = shuffleArray(allCards);
             await set(ref(db, 'gameState'), {
                 deck: shuffled,
-                activeCard: null
+                activeCard: null,
+                currentTurn: 'עדן' // מי מתחיל
             });
         }
 
         // שליפת קלף
         window.drawCard = async function() {
             const gameref = ref(db, 'gameState');
-        
+            const data =  snapshot;
+
+            if (data.currentTurn !== currentPlayer) {
+                setStatusMsg(`זה לא התור שלך — המתן/י ל${data.currentTurn} 😊`);
+                return; // עצור כאן!
+            }
             try{
                 const transactionResult = await runTransaction(gameref, (currentData) => {
                     if (currentData === null || !currentData.deck || currentData.deck.length === 0) {
@@ -306,14 +323,15 @@
         
                     const deck = [...currentData.deck];
                     const cardDraw = deck.pop();
-
+                    const nextTurn = currentData.currentTurn === 'דניאל' ? 'עדן' : 'דניאל';
                     return{
                         ...currentData,
                         deck: deck,
                         activeCard: {
                             ...cardDraw,
                             drawnBy: currentPlayer
-                        }
+                        },
+                        currentTurn: nextTurn
                     };
                 });
 
@@ -348,7 +366,17 @@
                 const cardFrontImage = document.querySelector('.card-front');
                 const activeCardBack = document.getElementById('active-card-back');
                 const gameBg = document.getElementById('game-background');
-
+                if (deckCount === 0 && !data.activeCard) {
+                    // הגדר מצב "game over" ב-Firebase
+                    setStatusMsg("כל הקלפים נחשפו. לעוד הרבה שנים יחד!! אוהב אותך ❤️");
+                    confetti({
+                        particleCount: 300,
+                        spread: 120,
+                        shapes: ['heart'],
+                        colors: ['#ff0000', '#ffb3b3', '#f1c40f'],
+                        origin: { y: 0.6 }
+                    });
+                }
                 if (data.activeCard) {
                     // הרקע המקורי והחלק שלך!
                     gameBg.style.backgroundImage = `url('${data.activeCard.bg}')`;
@@ -364,8 +392,9 @@
                        activeCardBack.innerHTML = `<div class="partner-msg">הקלף של ${data.activeCard.drawnBy}</div>`;
                        
                        // בחירת הודעת המתנה רנדומלית וחיבור השם שלה אליה
-                       const randomWait = waitingMessages[Math.floor(Math.random() * waitingMessages.length)];
-                       setStatusMsg(`${data.activeCard.drawnBy} ${randomWait}`);
+                       const messagesArray = waitingMessages[data.activeCard.drawnBy] || ["מחכים שיסיימו..."]; 
+                       const randomWait = messagesArray[Math.floor(Math.random() * messagesArray.length)];
+                       setStatusMsg(randomWait);
                     }
                 } else {
                     // אין קלף פעיל
@@ -375,7 +404,13 @@
                     setStatusMsg("תור מי לשלוף?");
                 }
             });
+           
         }
+        window.addEventListener('beforeunload', () => {
+            if (unsubscribeGameState) {
+                unsubscribeGameState();
+            }
+        });
     </script>
 </body>
 </html>
