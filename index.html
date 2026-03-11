@@ -204,25 +204,22 @@
         let unsubscribeGameState = null; 
         /* ── פונקציית אבני הדרך (מונה קלפים רומנטי) ── */
         // DeckAgent — רק מחזיר נתונים
-        function getCardCountData(count) {
-            const milestones = { 18: "...", 10: "...", 5: "...", 1: "...", 0: "..." };
-            return {
-                text: milestones[count] || `עוד ${count} הפתעות`,
-                isMilestone: milestones[count] !== undefined
+       /* ── פונקציית אבני הדרך (מונה קלפים רומנטי) ── */
+       function getCardCountMessage(count) {
+            const milestones = {
+                18: "כל ההפתעות מחכות לכם ✨",
+                10: "חצי הדרך — הכי טוב עוד לפניכם 💛",
+                5:  "עוד חמש הפתעות. תטעמו לאט 🌹",
+                1:  "הפתעה אחרונה. תעשו אותה שווה 🌹",
+                0:  "כל הקלפים נחשפו. הסיפור שלכם רק מתחיל ❤️"
             };
-        }
-
-        // UIAgent — רק מציג
-        function renderCardCount(count) {
-            const { text, isMilestone } = getCardCountData(count);
             const el = document.getElementById('cards-count');
-            el.innerText = text;
-            el.classList.toggle('milestone', isMilestone);
-            
-            // בונוס: קונפטי ב-milestone!
-            if (isMilestone && count > 0) {
-                confetti({ particleCount: 80, spread: 60, origin: { y: 0.5 } });
+            if (milestones[count] !== undefined) {
+                el.classList.add('milestone');
+                return milestones[count];
             }
+            el.classList.remove('milestone');
+            return `עוד ${count} הפתעות`;
         }
 
         /* ── פונקציית פעימת הלב (סטטוס) ── */
