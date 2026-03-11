@@ -309,22 +309,25 @@
         // שליפת קלף
         window.drawCard = async function() {
             const gameref = ref(db, 'gameState');
-            const data =  snapshot;
-
-            if (data.currentTurn !== currentPlayer) {
-                setStatusMsg(`זה לא התור שלך — המתן/י ל${data.currentTurn} 😊`);
-                return; // עצור כאן!
-            }
-            try{
+        
+            try {
                 const transactionResult = await runTransaction(gameref, (currentData) => {
+                    // 1. הגנה: אם אין משחק או אין קלפים
                     if (currentData === null || !currentData.deck || currentData.deck.length === 0) {
-                        return; // אין קלפים לשלוף
+                        return; 
+                    }
+                    
+                    // 2. הגנה: בדיקת תור! אם זה לא התור של השחקן, נבטל את הפעולה (Abort)
+                    if (currentData.currentTurn !== currentPlayer) {
+                        return; // הפעולה מבוטלת מאחורי הקלעים
                     }
         
+                    // 3. אם הכל תקין והתור שלי - נשלוף קלף
                     const deck = [...currentData.deck];
                     const cardDraw = deck.pop();
                     const nextTurn = currentData.currentTurn === 'דניאל' ? 'עדן' : 'דניאל';
-                    return{
+                    
+                    return {
                         ...currentData,
                         deck: deck,
                         activeCard: {
@@ -335,14 +338,24 @@
                     };
                 });
 
-                if(!transactionResult.committed){
-                    setStatusMsg("נגמרו הקלפים, נכון שאני הכי טוב? אוהב אותך מלא! ❤️");
+                // כאן אנחנו בודקים למה הטרנזקציה נכשלה/בוטלה
+                if (!transactionResult.committed) {
+                    // קודם נבדוק אם אולי פשוט ניסו לגנוב תור
+                    get(gameref).then((snapshot) => {
+                        const data = snapshot.val();
+                        if (data && data.currentTurn !== currentPlayer) {
+                            setStatusMsg(`זה לא התור שלך — המתן/י ל${data.currentTurn} 😊`);
+                        } else {
+                            // אם התור בסדר, כנראה שפשוט נגמרו הקלפים
+                            setStatusMsg("נגמרו הקלפים, נכון שאני הכי טוב? אוהב אותך מלא! ❤️");
+                        }
+                    });
                 }
-                } catch (error) {
-                    console.error("שגיאה בשליפת קלף:", error);
-                    setStatusMsg("אופס היה race condition, ננסה שוב");
-                }
-            }; 
+            } catch (error) {
+                console.error("שגיאה בשליפת קלף:", error);
+                setStatusMsg("אופס היה race condition, ננסה שוב");
+            }
+        }; 
         // האזנה לשינויים בזמן אמת
         // האזנה לשינויים בזמן אמת
         function listenToGameState() {
