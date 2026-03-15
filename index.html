@@ -123,8 +123,55 @@
             }
             #game-background-overlay { position: fixed; inset: 0; z-index: 0; background: radial-gradient(ellipse at center, rgba(20,30,40,0.0) 0%, rgba(20,30,40,0.6) 100%); pointer-events: none; }
     
-            @media (max-width: 600px) {
+            .profiles-container {
+            display: flex;
+            gap: 40px;
+            margin-top: 20px;
+        }
+
+        .profile-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .profile-card:hover {
+            transform: translateY(-8px) scale(1.05);
+        }
+
+        .profile-img {
+            width: 130px;
+            height: 130px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 4px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .profile-card:hover .profile-img {
+            border-color: var(--red);
+            box-shadow: 0 12px 32px rgba(231, 76, 60, 0.4);
+        }
+
+        .profile-name {
+            margin-top: 16px;
+            font-size: 1.3rem;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+            color: white;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+            transition: color 0.3s ease;
+        }
+
+        .profile-card:hover .profile-name {
+            color: var(--red);
+        }
+        @media (max-width: 600px) {
                 #game-screen { padding-top: 20px; } .card-slot { width: 150px; height: 220px; } .cards-container { gap: 14px; margin-top: 18px; }
+                profile-img { width: 100px; height: 100px; } .profiles-container { gap: 20px; }
             }
         </style>
     </head>
@@ -142,9 +189,17 @@
     <div id="login-screen">
         <h1 class="screen-title" style="color:white;">של מי התור להוביל?</h1>
         <p class="login-subtitle">בחר/י את שמך כדי להתחיל</p>
-        <div>
-            <button class="btn" onclick="joinGame('דניאל')">דניאל</button>
-            <button class="btn" onclick="joinGame('עדן')">עדן</button>
+        
+        <div class="profiles-container">
+            <div class="profile-card" onclick="joinGame('דניאל')">
+                <img src="Dan_child.jpeg" alt="דניאל" class="profile-img">
+                <span class="profile-name">דניאל</span>
+            </div>
+            
+            <div class="profile-card" onclick="joinGame('עדן')">
+                <img src="Eden_child.jpeg" alt="עדן" class="profile-img">
+                <span class="profile-name">עדן</span>
+            </div>
         </div>
     </div>
 
