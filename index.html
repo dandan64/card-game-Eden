@@ -169,6 +169,32 @@
         .profile-card:hover .profile-name {
             color: var(--red);
         }
+        /* הוסף ל-CSS */
+        #turn-indicator {
+            font-size: 1rem;
+            font-weight: 600;
+            padding: 6px 20px;
+            border-radius: 50px;
+            margin-bottom: 8px;
+            transition: all 0.4s ease;
+        }
+        #turn-indicator.my-turn {
+            background: rgba(241, 196, 15, 0.2);
+            color: var(--gold-soft);
+            border: 1px solid rgba(241, 196, 15, 0.4);
+        }
+        #turn-indicator.their-turn {
+            background: rgba(255,255,255,0.06);
+            color: rgba(255,255,255,0.4);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        /* כש-זה לא התור שלי — חפיסת הקלפים מאופקת */
+        #deck-slot.disabled {
+            opacity: 0.4;
+            pointer-events: none;
+            filter: grayscale(0.5);
+        }
         @media (max-width: 600px) {
                 #game-screen { padding-top: 20px; } .card-slot { width: 150px; height: 220px; } .cards-container { gap: 14px; margin-top: 18px; }
                 profile-img { width: 100px; height: 100px; } .profiles-container { gap: 20px; }
@@ -205,7 +231,8 @@
     <div id="game-screen">
         <h2 id="welcome-msg"></h2>
         <div id="cards-count">טוען...</div>
-
+        <!-- הוסף מעל cards-container -->
+        <div id="turn-indicator"></div>
         <div class="cards-container">
             <div class="card-slot" id="deck-slot" onclick="drawCard()">
                 <div class="card-inner">
@@ -354,16 +381,26 @@
 
         // אתחול משחק חדש ב-DB
         window.resetGame = async function() {
+            // ✅ תמיד תבקש אישור לפני מחיקת המשחק
+            const confirmed = confirm("לאפס את המשחק? כל ההתקדמות תימחק לשניכם 🔄");
+            if (!confirmed) return;
+            
             const shuffled = shuffleArray(allCards);
             await set(ref(db, 'gameState'), {
                 deck: shuffled,
                 activeCard: null,
-                currentTurn: 'עדן' // מי מתחיל
+                currentTurn: 'עדן'
             });
+            setStatusMsg("המשחק אופס — בהצלחה! 🎴");
         }
-
         // שליפת קלף
         window.drawCard = async function() {
+            const deckSlot = document.getElementById('deck-slot');
+            deckSlot.style.transform = 'scale(0.93)';
+            setTimeout(() => { deckSlot.style.transform = ''; }, 200);
+            
+            setStatusMsg("שולף קלף... 🃏");
+
             const gameref = ref(db, 'gameState');
         
             try {
@@ -414,6 +451,7 @@
         }; 
         // האזנה לשינויים בזמן אמת
         // האזנה לשינויים בזמן אמת
+        // האזנה לשינויים בזמן אמת
         function listenToGameState() {
             const gameStateRef = ref(db, 'gameState');
             if (unsubscribeGameState) {
@@ -427,7 +465,7 @@
                     return;
                 }
 
-                // 1. שימוש במונה הקלפים החדש
+                // 1. עדכון מונה הקלפים
                 const deckCount = data.deck ? data.deck.length : 0;
                 document.getElementById('cards-count').innerText = getCardCountMessage(deckCount);
 
@@ -435,9 +473,24 @@
                 const cardFrontImage = document.querySelector('.card-front');
                 const activeCardBack = document.getElementById('active-card-back');
                 const gameBg = document.getElementById('game-background');
+                const turnEl = document.getElementById('turn-indicator');
+                const deckSlot = document.getElementById('deck-slot');
+
+                // 2. עדכון סמן התור העליון ומצב החפיסה
+                if (data.currentTurn === currentPlayer) {
+                    turnEl.textContent = `⚡ התור שלך — שלוף קלף!`;
+                    turnEl.className = 'my-turn';
+                    deckSlot.classList.remove('disabled');
+                } else {
+                    turnEl.textContent = `⏳ מחכים ל${data.currentTurn}...`;
+                    turnEl.className = 'their-turn';
+                    deckSlot.classList.add('disabled');
+                }
+
+                // 3. ניהול סוף המשחק
                 if (deckCount === 0 && !data.activeCard) {
-                    // הגדר מצב "game over" ב-Firebase
                     setStatusMsg("כל הקלפים נחשפו. לעוד הרבה שנים יחד!! אוהב אותך ❤️");
+                    turnEl.style.display = 'none'; // מסתירים את התור כי נגמר המשחק
                     confetti({
                         particleCount: 300,
                         spread: 120,
@@ -445,22 +498,25 @@
                         colors: ['#ff0000', '#ffb3b3', '#f1c40f'],
                         origin: { y: 0.6 }
                     });
+                    return; // עוצרים כאן כדי שלא ינסה לרנדר קלפים ריקים
+                } else {
+                    turnEl.style.display = 'block';
                 }
+
+                // 4. ניהול הקלף הפעיל
                 if (data.activeCard) {
-                    // הרקע המקורי והחלק שלך!
                     gameBg.style.backgroundImage = `url('${data.activeCard.bg}')`;
                     
                     if (data.activeCard.drawnBy === currentPlayer) {
                         // הקלף אצלי
                         cardFrontImage.style.backgroundImage = `url('${data.activeCard.image}')`;
                         activeCardSlot.classList.add('flipped');
-                        setStatusMsg("זה הקלף שלך!"); // שימוש בפונקציית הפעימה
+                        setStatusMsg("זה הקלף שלך!");
                     } else {
                        // הקלף אצל הבת זוג
                        activeCardSlot.classList.remove('flipped');
                        activeCardBack.innerHTML = `<div class="partner-msg">הקלף של ${data.activeCard.drawnBy}</div>`;
                        
-                       // בחירת הודעת המתנה רנדומלית וחיבור השם שלה אליה
                        const messagesArray = waitingMessages[data.activeCard.drawnBy] || ["מחכים שיסיימו..."]; 
                        const randomWait = messagesArray[Math.floor(Math.random() * messagesArray.length)];
                        setStatusMsg(randomWait);
@@ -470,10 +526,15 @@
                     gameBg.style.backgroundImage = `url('front-page.jpeg')`;
                     activeCardSlot.classList.remove('flipped');
                     activeCardBack.innerHTML = '';
-                    setStatusMsg("תור מי לשלוף?");
+                    
+                    // סטטוס כשהלוח ריק (שמתי תנאי מובנה כדי שלא יחפוף עם אינדיקטור התור)
+                    if (data.currentTurn === currentPlayer) {
+                        setStatusMsg("קדימה, מחכים לך! 😉");
+                    } else {
+                        setStatusMsg(`תן ל${data.currentTurn} את הזמן...`);
+                    }
                 }
             });
-           
         }
         window.addEventListener('beforeunload', () => {
             if (unsubscribeGameState) {
