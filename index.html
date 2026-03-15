@@ -246,11 +246,16 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        const allCards = Array.from({ length: 18 }, (_, i) => ({
-            id: i + 1,
-            image: `card${i + 1}.png`,
-            bg: `bg${i + 1}.jpeg` // הוספנו את הקישור לתמונת הרקע הייעודית
-        }));
+        const allCards = Array.from({ length: 23 }, (_, i) => {
+            const cardNumber = i + 1; // ירוץ מ-1 עד 23
+            const bgNumber = (i % 18) + 1; // ירוץ מ-1 עד 18 ואז יחזור ל-1
+            
+            return {
+                id: cardNumber,
+                image: `card${cardNumber}.png`,
+                bg: `bg${bgNumber}.jpeg`
+            };
+        });
 
         const cardBack = "card-back.png";
 
@@ -261,8 +266,8 @@
        /* ── פונקציית אבני הדרך (מונה קלפים רומנטי) ── */
        function getCardCountMessage(count) {
             const milestones = {
-                18: "כל ההפתעות מחכות לכם ✨",
-                10: "חצי הדרך — הכי טוב עוד לפניכם 💛",
+                23: "כל ההפתעות מחכות לכם ✨", // עודכן ל-23
+                12: "חצי הדרך — הכי טוב עוד לפניכם 💛", // עודכן ל-12
                 5:  "עוד חמש הפתעות. תטעמו לאט 🌹",
                 1:  "הפתעה אחרונה. תעשו אותה שווה 🌹",
                 0:  "כל הקלפים נחשפו. הסיפור שלכם רק מתחיל ❤️"
